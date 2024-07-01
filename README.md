@@ -37,5 +37,6 @@ Google Apps Script: Light weight (do not need a google cloud project), free to u
 
 ## Development Steps
 1. Develop and deploy using Yanchen (Victor) Zhao's google account.
+    1. Fetch a list of folders, select a folder to duplicate, with all content copied.
 2. Testing deploy using Ashley's google account.
 3. Testing deploy and handover to the supervisor.

@@ -7,7 +7,6 @@
   <script>
     $(document).ready(function() {
       google.script.run.withSuccessHandler(populateFolderList).getFolders();
-      
       $('#duplicateForm').on('submit', function(e) {
         e.preventDefault();
         
