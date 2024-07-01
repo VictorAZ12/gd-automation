@@ -1,5 +1,8 @@
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile('Index');
+  return HtmlService.createHtmlOutputFromFile('Index')
+      .setTitle('Folder Management App')
+      .setWidth(600)
+      .setHeight(400);
 }
 
 function getFolders() {
@@ -8,43 +11,47 @@ function getFolders() {
   
   while (folders.hasNext()) {
     var folder = folders.next();
-    folderList.push({name: folder.getName(), id: folder.getId()});
+    folderList.push({
+      id: folder.getId(),
+      name: folder.getName()
+    });
   }
   
   return folderList;
 }
 
-function duplicateFolder(folderId, selectedFoldersToKeep, subfoldersToLimitAccess) {
-  var sourceFolder = DriveApp.getFolderById(folderId);
-  var destinationFolder = DriveApp.createFolder(sourceFolder.getName() + " - Copy");
+function duplicateFolder(folderId, newFolderName, keepFilesFolders, maintainAccessFolders) {
+  var originalFolder = DriveApp.getFolderById(folderId);
+  var newFolder = originalFolder.copy(newFolderName);
+  clearFolder(newFolder, keepFilesFolders, maintainAccessFolders);
   
-  copyFolderContents(sourceFolder, destinationFolder, selectedFoldersToKeep, subfoldersToLimitAccess);
-  
-  return "Folder duplication complete!";
+  return newFolder.getId();
 }
 
-function copyFolderContents(source, destination, selectedFoldersToKeep, subfoldersToLimitAccess) {
-  var folders = source.getFolders();
-  var files = source.getFiles();
-  
-  while (files.hasNext()) {
-    var file = files.next();
-    if (selectedFoldersToKeep.includes(source.getId())) {
-      destination.createFile(file);
-    }
-  }
+function clearFolder(folder, keepFilesFolders, maintainAccessFolders) {
+  var folders = folder.getFolders();
   
   while (folders.hasNext()) {
-    var folder = folders.next();
-    var newFolder = destination.createFolder(folder.getName());
-    
-    if (subfoldersToLimitAccess.includes(folder.getId())) {
-      var editors = folder.getEditors();
-      for (var i = 0; i < editors.length; i++) {
-        folder.removeEditor(editors[i]);
+    var subFolder = folders.next();
+    if (!keepFilesFolders.includes(subFolder.getId())) {
+      var files = subFolder.getFiles();
+      while (files.hasNext()) {
+        var file = files.next();
+        file.setTrashed(true);
       }
     }
     
-    copyFolderContents(folder, newFolder, selectedFoldersToKeep, subfoldersToLimitAccess);
+    if (!maintainAccessFolders.includes(subFolder.getId())) {
+      var editors = subFolder.getEditors();
+      var viewers = subFolder.getViewers();
+      
+      for (var i = 0; i < editors.length; i++) {
+        subFolder.removeEditor(editors[i].getEmail());
+      }
+      
+      for (var j = 0; j < viewers.length; j++) {
+        subFolder.removeViewer(viewers[j].getEmail());
+      }
+    }
   }
 }

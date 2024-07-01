@@ -1,47 +1,63 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-    <script>
-      function getFolders() {
-        google.script.run.withSuccessHandler(function(folders) {
-          var folderSelect = document.getElementById('folderSelect');
-          folders.forEach(function(folder) {
-            var option = document.createElement('option');
-            option.text = folder.name;
-            option.value = folder.id;
-            folderSelect.add(option);
-          });
-        }).getFolders();
-      }
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      google.script.run.withSuccessHandler(populateFolderList).getFolders();
       
-      function duplicateFolder() {
-        var folderId = document.getElementById('folderSelect').value;
-        var selectedFoldersToKeep = Array.from(document.querySelectorAll('input[name="keepFiles"]:checked')).map(el => el.value);
-        var subfoldersToLimitAccess = Array.from(document.querySelectorAll('input[name="limitAccess"]:checked')).map(el => el.value);
+      $('#duplicateForm').on('submit', function(e) {
+        e.preventDefault();
         
-        google.script.run.withSuccessHandler(function(message) {
-          alert(message);
-        }).duplicateFolder(folderId, selectedFoldersToKeep, subfoldersToLimitAccess);
-      }
+        var folderId = $('#folderSelect').val();
+        var newFolderName = $('#newFolderName').val();
+        var keepFilesFolders = $('#keepFilesFolders').val().split(',');
+        var maintainAccessFolders = $('#maintainAccessFolders').val().split(',');
+        
+        google.script.run.duplicateFolder(folderId, newFolderName, keepFilesFolders, maintainAccessFolders)
+          .then(function(response) {
+            alert('Folder duplicated successfully! New Folder ID: ' + response);
+          })
+          .catch(function(error) {
+            alert('Error duplicating folder: ' + error.message);
+          });
+      });
+    });
+    
+    function populateFolderList(folders) {
+      var folderSelect = $('#folderSelect');
+      folderSelect.empty();
       
-      window.onload = getFolders;
-    </script>
-  </head>
-  <body>
-    <h1>Duplicate Google Drive Folder</h1>
-    <label for="folderSelect">Select a folder to duplicate:</label>
-    <select id="folderSelect"></select>
-    <br><br>
-    
-    <h2>Select Subfolders to Keep Files</h2>
-    <!-- Populate these dynamically based on the selected folder -->
-    <div id="keepFilesDiv"></div>
-    
-    <h2>Select Subfolders to Limit Access</h2>
-    <!-- Populate these dynamically based on the selected folder -->
-    <div id="limitAccessDiv"></div>
-    
-    <button onclick="duplicateFolder()">Duplicate Folder</button>
-  </body>
+      folders.forEach(function(folder) {
+        folderSelect.append('<option value="' + folder.id + '">' + folder.name + '</option>');
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mt-5">Folder Management App</h1>
+    <form id="duplicateForm">
+      <div class="form-group">
+        <label for="folderSelect">Select Folder:</label>
+        <select class="form-control" id="folderSelect" required></select>
+      </div>
+      <div class="form-group">
+        <label for="newFolderName">New Folder Name:</label>
+        <input type="text" class="form-control" id="newFolderName" required>
+      </div>
+      <div class="form-group">
+        <label for="keepFilesFolders">Subfolder IDs to Keep Files (comma separated):</label>
+        <input type="text" class="form-control" id="keepFilesFolders">
+      </div>
+      <div class="form-group">
+        <label for="maintainAccessFolders">Subfolder IDs to Maintain Access (comma separated):</label>
+        <input type="text" class="form-control" id="maintainAccessFolders">
+      </div>
+      <button type="submit" class="btn btn-primary">Duplicate Folder</button>
+    </form>
+  </div>
+</body>
 </html>

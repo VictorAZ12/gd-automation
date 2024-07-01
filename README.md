@@ -13,7 +13,9 @@ Folders on Google Drive can contain subfolders, files, and have folder-level acc
 * remove all files within its subfolders (only keep subfolders and their original name) and all access to the shared folders except for the user himself/herself
 * additionally, the user can select which subfolders can keep the files, which folders can maintain the access.
 
-- The app should be easy to use: it should have a GUI, allow users to manipulate with buttons, and can be used anywhere - that is, a web application.
+* The app should be easy to use: it should have a nice-looking GUI (implemented in an HTML file), with some aesthetic design with boostrap (or other frontend CSS module), allow users to manipulate with buttons, and can be used anywhere - that is, a web application.
+
+
 - This web application should require no individual server. That is: it should utilise google cloud service, like Google Apps Script, or Google Cloud Project, or Google Workspace, or a combination of them.
 # Description
 This program is developed during the developer's internship at Path of Hope Foundation.
