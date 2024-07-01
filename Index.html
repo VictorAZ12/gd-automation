@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script>
+      function getFolders() {
+        google.script.run.withSuccessHandler(function(folders) {
+          var folderSelect = document.getElementById('folderSelect');
+          folders.forEach(function(folder) {
+            var option = document.createElement('option');
+            option.text = folder.name;
+            option.value = folder.id;
+            folderSelect.add(option);
+          });
+        }).getFolders();
+      }
+      
+      function duplicateFolder() {
+        var folderId = document.getElementById('folderSelect').value;
+        var selectedFoldersToKeep = Array.from(document.querySelectorAll('input[name="keepFiles"]:checked')).map(el => el.value);
+        var subfoldersToLimitAccess = Array.from(document.querySelectorAll('input[name="limitAccess"]:checked')).map(el => el.value);
+        
+        google.script.run.withSuccessHandler(function(message) {
+          alert(message);
+        }).duplicateFolder(folderId, selectedFoldersToKeep, subfoldersToLimitAccess);
+      }
+      
+      window.onload = getFolders;
+    </script>
+  </head>
+  <body>
+    <h1>Duplicate Google Drive Folder</h1>
+    <label for="folderSelect">Select a folder to duplicate:</label>
+    <select id="folderSelect"></select>
+    <br><br>
+    
+    <h2>Select Subfolders to Keep Files</h2>
+    <!-- Populate these dynamically based on the selected folder -->
+    <div id="keepFilesDiv"></div>
+    
+    <h2>Select Subfolders to Limit Access</h2>
+    <!-- Populate these dynamically based on the selected folder -->
+    <div id="limitAccessDiv"></div>
+    
+    <button onclick="duplicateFolder()">Duplicate Folder</button>
+  </body>
+</html>
