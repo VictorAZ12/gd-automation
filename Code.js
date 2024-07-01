@@ -55,3 +55,15 @@ function copy(fromFolder, toFolder) {
     copy(folder, newFolder)
   }
 }
+
+function copyPermission(from, to) {
+  // get the permission of the from file/folder, then copy the permission to the target file/folder
+  
+}
+
+function addEditorsFolder(editors, targetFolderID) {
+  // add editors to the given folder
+  let targetFolder = DriveApp.getFolderById("1wBiwaiaQTrkERDVckl7Ky8WbA3Cbh4x6");
+  const editorEmails = ["23428364@student.uwa.edu.au"];
+  targetFolder.addEditors(editorEmails);
+}
