@@ -18,11 +18,9 @@ function retrieveFoldersInRoot(){
   }
 }
 
-function copyFolderRec(from, to, name){
-  // Copy all subfolders and files stored in a folder with id, copy access
-  let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
-  let toID = "0AOWuBqGTrL__Uk9PVA";
-  let newFolderName = "copy-test";
+function copyFolderRec(fromID, toID, newFolderName){
+  // Copy all subfolders and files stored in a folder with fromID, to the folder with toID
+  // name the created folder with newFolderName
   let fromFolder = DriveApp.getFolderById(fromID);
   let toFolder = DriveApp.getFolderById(toID);
   // check if name is valid
