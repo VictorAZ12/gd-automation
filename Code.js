@@ -17,10 +17,11 @@ function retrieveFoldersInRoot(){
     Logger.log(folder.getName() + ", id: " + folder.getId());
   }
 }
-
-function copyFolderRec(fromID, toID, newFolderName){
-  // Copy all subfolders and files stored in a folder with fromID, to the folder with toID
-  // name the created folder with newFolderName
+function copyFolderRec(from, to, name){
+  // Copy all subfolders and files stored in a folder with id, copy access
+  let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
+  let toID = "0AOWuBqGTrL__Uk9PVA";
+  let newFolderName = "copy-test";
   let fromFolder = DriveApp.getFolderById(fromID);
   let toFolder = DriveApp.getFolderById(toID);
   // check if name is valid
@@ -56,13 +57,7 @@ function copy(fromFolder, toFolder) {
   }
 }
 
-function copyPermission(from, to) {
-  // get the permission of the from file/folder, then copy the permission to the target file/folder
-  
-}
-
 function addEditorsFolder(editors, targetFolderID) {
-  // add editors to the given folder
   let targetFolder = DriveApp.getFolderById("1wBiwaiaQTrkERDVckl7Ky8WbA3Cbh4x6");
   const editorEmails = ["23428364@student.uwa.edu.au"];
   targetFolder.addEditors(editorEmails);
