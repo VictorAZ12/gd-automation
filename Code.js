@@ -58,7 +58,28 @@ function copy(fromFolder, toFolder) {
 }
 
 function addEditorsFolder(editors, targetFolderID) {
+  // add a grouop of editors to a folder using the folder's ID
   let targetFolder = DriveApp.getFolderById("1wBiwaiaQTrkERDVckl7Ky8WbA3Cbh4x6");
   const editorEmails = ["23428364@student.uwa.edu.au"];
   targetFolder.addEditors(editorEmails);
+}
+
+function copyAccess(fromFolderId, toFolderId) {
+  // get the access of the fromFolder, copy that to the toFolder
+  let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
+  let toID = "1-Xr9vO_kKBOB0DzizRXLjMW0TYclN25f";
+  let fromFolder = DriveApp.getFolderById(fromID);
+  let toFolder = DriveApp.getFolderById(toID);
+  Logger.log(fromFolder.getName());
+  // copy editors
+  let fromFolderEditors = fromFolder.getEditors();
+  Logger.log(fromFolderEditors);
+  for (let i = 0; i < fromFolderEditors.length; i++){
+    Logger.log(fromFolderEditors[i].getName());
+    toFolder.addEditor(fromFolderEditors[i]);
+
+  }
+  // copy commentors
+
+  
 }
