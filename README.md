@@ -51,3 +51,8 @@ Create a Google Apps Script and an associated HTML page to allow user to select 
 - Display text of the directory path
 - Provide a button, so that the user confirms the selection.
 The HTML page should utilise bootstrap framework to make it look good.
+### Stage 2
+The user can then select the subfolders within the selected folder to choose to maintain files stored in them. 
+- The user can only navigate up to the selected folder
+- **IMPORTANT: add server-side verification, do not duplicate folders outside the selected folder.**
+- The use can click on an add button to select folders.

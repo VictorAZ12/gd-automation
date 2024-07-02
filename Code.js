@@ -1,22 +1,70 @@
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index');
+}
+
 function retrieveFolders(){
   // Retrieve all folders and display names
   let folders = DriveApp.getFolders();
   while (folders.hasNext()) {
     let folder = folders.next();
-    Logger.log(folder.getName());
+    Logger.log("Folder: %s, id %s",folder.getName(), folder.getId());
   }
 }
 
-function retrieveFoldersInRoot(){
-  // Retrieve folders within the root folder only, display names
-  let rootFolder = DriveApp.getRootFolder();
-  Logger.log("Root folder id: " + rootFolder.getId());
-  let folders = rootFolder.getFolders();
-  while (folders.hasNext()) {
-    let folder = folders.next();
-    Logger.log(folder.getName() + ", id: " + folder.getId());
+function getFoldersInFolder(folderId) {
+  // if given a folderId, retrieve the given folder, otherwise root folder is used
+  // return a list of folder in JSON {id, name}
+  let folder;
+  if (folderId) {
+    folder = DriveApp.getFolderById(folderId);
+  } else {
+    folder = DriveApp.getRootFolder();
   }
+
+  let folders = folder.getFolders();
+  let folderList = [];
+
+  while (folders.hasNext()) {
+    let subFolder = folders.next();
+    folderList.push({
+      id: subFolder.getId(),
+      name: subFolder.getName()
+    });
+  }
+  return JSON.stringify(folderList);
 }
+
+function getFolderPath(folderId) {
+  // get a folder's path structure using its foldervID
+  let path = [];
+  let folder;
+  if (folderId) {
+    folder = DriveApp.getFolderById(folderId);
+  }
+  else {
+    folder = DriveApp.getRootFolder();
+  }
+  
+  while (folder) {
+    path.unshift({
+      id: folder.getId(),
+      name: folder.getName()
+    });
+
+    let parents = folder.getParents();
+    if (parents.hasNext()) {
+      folder = parents.next();
+    }
+    else {
+      folder = null;
+    }
+  }
+  Logger.log(JSON.stringify(path));
+  return JSON.stringify(path);
+  
+}
+
+
 function copyFolderRec(from, to, name){
   // Copy all subfolders and files stored in a folder with id, copy access
   let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
@@ -35,12 +83,12 @@ function copyFolderRec(from, to, name){
   }
   let createdFolder = toFolder.createFolder(newFolderName);
   copy(fromFolder, createdFolder);
-  Logger.log("Folder copied.")
+  Logger.log("Folder copied. Folder ID: %s", createdFolder.getId());
 
 }
 
 function copy(fromFolder, toFolder) {
-  // copy files, inspired by KenjiOhtsuka code retrieved from https://gist.github.com/KenjiOhtsuka/d4432b6d80ad2b81ab7c965de2a8a00d
+  // copy files recursively, inspired by KenjiOhtsuka code retrieved from https://gist.github.com/KenjiOhtsuka/d4432b6d80ad2b81ab7c965de2a8a00d
   let files = fromFolder.getFiles()
   while (files.hasNext()) {
     let file = files.next();
@@ -67,19 +115,25 @@ function addEditorsFolder(editors, targetFolderID) {
 function copyAccess(fromFolderId, toFolderId) {
   // get the access of the fromFolder, copy that to the toFolder
   let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
-  let toID = "1-Xr9vO_kKBOB0DzizRXLjMW0TYclN25f";
+  let toID = "15MsMq4oeDY5RqvhhC7hnFAlLJh0Pr8_-";
   let fromFolder = DriveApp.getFolderById(fromID);
   let toFolder = DriveApp.getFolderById(toID);
-  Logger.log(fromFolder.getName());
+  Logger.log("Copying access from %s to %s...", fromFolder.getName(), toFolder.getName());
   // copy editors
   let fromFolderEditors = fromFolder.getEditors();
-  Logger.log(fromFolderEditors);
   for (let i = 0; i < fromFolderEditors.length; i++){
-    Logger.log(fromFolderEditors[i].getName());
     toFolder.addEditor(fromFolderEditors[i]);
+    Logger.log("Editor: %s (%s) is added.", fromFolderEditors[i].getName(), fromFolderEditors[i].getEmail());
 
   }
-  // copy commentors
-
-  
+  // copy viewers (cannot differentiate commenter, technology limitation)
+  let fromFolderViewers = fromFolder.getViewers();
+  for (let i = 0; i < fromFolderViewers.length; i++){
+    toFolder.addViewer(fromFolderViewers[i]);
+    Logger.log("Viewer: %s (%s) is added.", fromFolderViewers[i].getName(), fromFolderViewers[i].getEmail());
+  }
+  Logger.log("Access copy completed.")
 }
+
+
+
