@@ -65,13 +65,11 @@ function getFolderPath(folderId) {
 }
 
 
-function copyFolderRec(from, to, name){
+function copyFolderRec(fromId, toId, newFolderName){
   // Copy all subfolders and files stored in a folder with id, copy access
-  let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
-  let toID = "0AOWuBqGTrL__Uk9PVA";
-  let newFolderName = "copy-test";
-  let fromFolder = DriveApp.getFolderById(fromID);
-  let toFolder = DriveApp.getFolderById(toID);
+  
+  let fromFolder = DriveApp.getFolderById(fromId);
+  let toFolder = DriveApp.getFolderById(toId);
   // check if name is valid
   let toFolderSubfolders = toFolder.getFolders();
   while(toFolderSubfolders.hasNext()){
@@ -84,6 +82,7 @@ function copyFolderRec(from, to, name){
   let createdFolder = toFolder.createFolder(newFolderName);
   copy(fromFolder, createdFolder);
   Logger.log("Folder copied. Folder ID: %s", createdFolder.getId());
+  return createdFolder.getId();
 
 }
 
@@ -135,5 +134,42 @@ function copyAccess(fromFolderId, toFolderId) {
   Logger.log("Access copy completed.")
 }
 
+function handleSubmission(data){
+  // data: {
+  //   "duplicateFolder": {
+  //     "id": id of the folder to be duplicated,
+  //       "path": path of the folder to be duplicated,
+  //       },
+  //   "keepFileFolders": [
+  //     {
+  //       "id": id of the folder to keep files,
+  //       "path": path of the folder to keep files,
+  //     }
+  //   ],
+  // "keepAccessFolders": [
+  //     {
+  //       "id": id of the folder to keep files,
+  //       "path": path of the folder to keep access,
+  //     }
+  //   ],
+  // }
+  data = JSON.parse(data);
+  // 1. duplicate folder structure: duplicate the "duplicateFolder", in the same level of this folder and name it "copy of <duplicateFolder's name>"
+  let duplicateFolder = DriveApp.getFolderById(data.duplicateFolder.id);
+  let targetFolder = duplicateFolder.getParents().next();
+  let dulicateFolderSplit = data.duplicateFolder.path.split("/");
+  let newFolderName = "[copy]" + dulicateFolderSplit[dulicateFolderSplit.length-1];
+  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName);
+    // get the original folder's path
+
+    // copy the folder structure
+
+  // 2. copy files and within the new folder based on keepFileFolders
+
+  // 3. copy access to the new folders based on keepAccessFolders
+  // Logger.log(JSON.parse(data));
+  return createdFolderId;
+  
+}
 
 
