@@ -40,3 +40,19 @@ Google Apps Script: Light weight (do not need a google cloud project), free to u
     1. Fetch a list of folders, select a folder to duplicate, with all content copied.
 2. Testing deploy using Ashley's google account.
 3. Testing deploy and handover to the supervisor.
+
+## Stages
+### Stage 1
+Create a Google Apps Script and an associated HTML page to allow user to select a folder from all folders. This page should simulate the google drive's behaviour in the following way:
+- Start with root folder, display all folders
+- When click on a folder, it is selected. When a selected folder is clicked again, it's navigated into.
+- When a folder is navigated into. the page should show the subfolders instead
+- Provide a button, to navigate to the parent folder, the page should show the subfolders in its parent folders instead, unless it's the root folder.
+- Display text of the directory path
+- Provide a button, so that the user confirms the selection.
+The HTML page should utilise bootstrap framework to make it look good.
+### Stage 2
+The user can then select the subfolders within the selected folder to choose to maintain files stored in them. 
+- The user can only navigate up to the selected folder
+- **IMPORTANT: add server-side verification, do not duplicate folders outside the selected folder.**
+- The use can click on an add button to select folders.
