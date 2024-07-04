@@ -56,3 +56,9 @@ The user can then select the subfolders within the selected folder to choose to 
 - The user can only navigate up to the selected folder
 - **IMPORTANT: add server-side verification, do not duplicate folders outside the selected folder.**
 - The use can click on an add button to select folders.
+### Stage 3
+The user can view response from the apps script service. Also, the developer should be able to see more information from the logger.
+- User should be able to click on the reset to refresh the page and clear all selections.
+- User
+- Programming running logs should be friendly for developers
+- Program file structures should follow the [best practice](https://developers.google.com/apps-script/guides/html/best-practices).
