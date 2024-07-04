@@ -59,13 +59,17 @@ function getFolderPath(folderId) {
       folder = null;
     }
   }
-  Logger.log(JSON.stringify(path));
+  // Logger.log(JSON.stringify(path));
   return JSON.stringify(path);
   
 }
 
+function getFolderPathString(folderId){
+  return JSON.parse(getFolderPath(folderId)).map(folder => folder.name).join("/");
+}
 
-function copyFolderRec(fromId, toId, newFolderName, keepFileFolders, keepAccessFolders){
+
+function copyFolderRec(fromId, toId, newFolderName, keepFileFolders){
   // Copy all subfolders and files stored in a folder with id, copy access
   
   let fromFolder = DriveApp.getFolderById(fromId);
@@ -100,7 +104,7 @@ function copy(fromFolder, toFolder, isCopyFile, keepFileFolders) {
     }
   }
   // copy folders
-  let folders = fromFolder.getFolders()
+  let folders = fromFolder.getFolders();
   while (folders.hasNext()) {
     let folder = folders.next();
     let newFolder = toFolder.createFolder(folder.getName());
@@ -116,19 +120,41 @@ function copy(fromFolder, toFolder, isCopyFile, keepFileFolders) {
   }
 }
 
-function addEditorsFolder(editors, targetFolderID) {
-  // add a grouop of editors to a folder using the folder's ID
-  let targetFolder = DriveApp.getFolderById("1wBiwaiaQTrkERDVckl7Ky8WbA3Cbh4x6");
-  const editorEmails = ["23428364@student.uwa.edu.au"];
-  targetFolder.addEditors(editorEmails);
+function copyAccessRec(fromId, toId, duplicateFolderPathString, createdFolderPathString, keepAccessFolders) {
+  // copy access based on the copyAccessFolders array
+  // get keepAccessFolder's path string
+  
+  let fromFolder = DriveApp.getFolderById(fromId);
+  let toFolder = DriveApp.getFolderById(toId);
+  // copy folder access
+  let fromSubfolders = fromFolder.getFolders();
+
+  while (fromSubfolders.hasNext()) {
+    let folder = fromSubfolders.next();
+    let folderRelPathString = getFolderPathString(folder.getId()).replace(duplicateFolderPathString, '');
+    let toSubfolders = toFolder.getFolders();
+    while (toSubfolders.hasNext()){
+      let toSubfolder = toSubfolders.next();
+      let toFolderRelPathString = getFolderPathString(toSubfolder.getId()).replace(createdFolderPathString, '');
+      if (folderRelPathString === toFolderRelPathString) {
+        for (let i=0; i<keepAccessFolders.length; i++){
+          if (folder.getId() === keepAccessFolders[i].id) {
+            copyAccess(folder.getId(), toSubfolder.getId());
+            break;
+          }
+        }
+        copyAccessRec(folder.getId(), toSubfolder.getId(), duplicateFolderPathString, createdFolderPathString, keepAccessFolders);
+        break;
+      }
+    }
+  }
+
 }
 
-function copyAccess(fromFolderId, toFolderId) {
+function copyAccess(fromId, toId) {
   // get the access of the fromFolder, copy that to the toFolder
-  let fromID = "1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW";
-  let toID = "15MsMq4oeDY5RqvhhC7hnFAlLJh0Pr8_-";
-  let fromFolder = DriveApp.getFolderById(fromID);
-  let toFolder = DriveApp.getFolderById(toID);
+  let fromFolder = DriveApp.getFolderById(fromId);
+  let toFolder = DriveApp.getFolderById(toId);
   Logger.log("Copying access from %s to %s...", fromFolder.getName(), toFolder.getName());
   // copy editors
   let fromFolderEditors = fromFolder.getEditors();
@@ -171,14 +197,13 @@ function handleSubmission(data){
   let targetFolder = duplicateFolder.getParents().next();
   let dulicateFolderSplit = data.duplicateFolder.path.split("/");
   let newFolderName = "[copy]" + dulicateFolderSplit[dulicateFolderSplit.length-1];
-  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName, data.keepFileFolders, data.keepAccessFolders);
-    // get the original folder's path
-
-    // copy the folder structure
-
-  // 2. copy files and within the new folder based on keepFileFolders
-
+  // copy folders and files
+  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName, data.keepFileFolders);
   // 3. copy access to the new folders based on keepAccessFolders
+  let duplicateFolderPathString = getFolderPathString(duplicateFolder.getId());
+  let createdFolderPathString = getFolderPathString(createdFolderId);
+  Logger.log("Duplicate folder path string: %s, folder to copy access to path string: %s", duplicateFolderPathString, createdFolderPathString);
+  copyAccessRec(duplicateFolder.getId(), createdFolderId, duplicateFolderPathString, createdFolderPathString, data.keepAccessFolders);
   // Logger.log(JSON.parse(data));
   return createdFolderId;
   
