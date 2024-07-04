@@ -65,7 +65,7 @@ function getFolderPath(folderId) {
 }
 
 
-function copyFolderRec(fromId, toId, newFolderName){
+function copyFolderRec(fromId, toId, newFolderName, keepFileFolders, keepAccessFolders){
   // Copy all subfolders and files stored in a folder with id, copy access
   
   let fromFolder = DriveApp.getFolderById(fromId);
@@ -80,27 +80,39 @@ function copyFolderRec(fromId, toId, newFolderName){
     }
   }
   let createdFolder = toFolder.createFolder(newFolderName);
-  copy(fromFolder, createdFolder);
+  Logger.log(keepFileFolders);
+  copy(fromFolder, createdFolder, false, keepFileFolders);
   Logger.log("Folder copied. Folder ID: %s", createdFolder.getId());
   return createdFolder.getId();
 
 }
 
-function copy(fromFolder, toFolder) {
-  // copy files recursively, inspired by KenjiOhtsuka code retrieved from https://gist.github.com/KenjiOhtsuka/d4432b6d80ad2b81ab7c965de2a8a00d
-  let files = fromFolder.getFiles()
-  while (files.hasNext()) {
-    let file = files.next();
-    let newFile = file.makeCopy(toFolder)
-    newFile.setName(file.getName())
-  }
+function copy(fromFolder, toFolder, isCopyFile, keepFileFolders) {
+  // copy files and folders recursively from a folder into another folder
+  // inspired by KenjiOhtsuka code retrieved from https://gist.github.com/KenjiOhtsuka/d4432b6d80ad2b81ab7c965de2a8a00d
 
+  if (isCopyFile){
+    let files = fromFolder.getFiles()
+    while (files.hasNext()) {
+      let file = files.next();
+      let newFile = file.makeCopy(toFolder);
+      newFile.setName(file.getName());
+    }
+  }
   // copy folders
   let folders = fromFolder.getFolders()
   while (folders.hasNext()) {
-    let folder = folders.next()
-    let newFolder = toFolder.createFolder(folder.getName())
-    copy(folder, newFolder)
+    let folder = folders.next();
+    let newFolder = toFolder.createFolder(folder.getName());
+    isCopyFile = false;
+    for (let i=0; i<keepFileFolders.length; i++) {
+      if (folder.getId() === keepFileFolders[i].id) {
+        isCopyFile = true;
+        Logger.log("The folder %s will have its file copid", folder.getName());
+        break;
+      }
+    }
+    copy(folder, newFolder, isCopyFile, keepFileFolders);
   }
 }
 
@@ -159,7 +171,7 @@ function handleSubmission(data){
   let targetFolder = duplicateFolder.getParents().next();
   let dulicateFolderSplit = data.duplicateFolder.path.split("/");
   let newFolderName = "[copy]" + dulicateFolderSplit[dulicateFolderSplit.length-1];
-  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName);
+  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName, data.keepFileFolders, data.keepAccessFolders);
     // get the original folder's path
 
     // copy the folder structure
