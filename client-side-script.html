@@ -249,8 +249,26 @@
         "keepFileFolders": keepFileFolders,
         "keepAccessFolders": keepAccessFolders,
       }
-      google.script.run.handleSubmission(JSON.stringify(data));
+      google.script.run.withSuccessHandler(handleResponse).handleSubmission(JSON.stringify(data));
     }
+
+    function handleResponse(response) {
+      const postSubmissionContainer = $("#postSubmissionContainer");
+      response = JSON.parse(response);
+      if (response.success) {
+        postSubmissionContainer.append("<p>Submission successful!</p>");
+        
+      } else {
+        postSubmissionContainer.append("<p>Submission failed. See logs below:</p>");
+      }
+      const logsList = $("<ul></ul>");
+      response.logs.forEach(log => {
+        logsList.append($("<li></li>").text(log));
+      });
+      postSubmissionContainer.append(logsList);
+    }
+
+
     $(document).ready(function() {
       listFolders();
       $("#promptMessage").text("Select a folder to be duplicated.");

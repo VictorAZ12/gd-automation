@@ -312,18 +312,29 @@ function handleSubmission(data){
   
   // 3. copy access to the new folders based on keepAccessFolders
   if (createdFolderId){
-    let duplicateFolderPathString = getFolderPathString(duplicateFolder.getId());
-    let createdFolderPathString = getFolderPathString(createdFolderId);
-    Logger.log("Duplicate folder path string: %s, folder to copy access to path string: %s", duplicateFolderPathString, createdFolderPathString);
-    copyAccessRec(duplicateFolder.getId(), createdFolderId, duplicateFolderPathString, createdFolderPathString, data.keepAccessFolders);
-    Logger.log("All work done.");
-    // Logger.log(JSON.parse(data));
-
-    return createdFolderId;
+    try {
+      let duplicateFolderPathString = getFolderPathString(duplicateFolder.getId());
+      let createdFolderPathString = getFolderPathString(createdFolderId);
+      Logger.log("Duplicate folder path string: %s, folder to copy access to path string: %s", duplicateFolderPathString, createdFolderPathString);
+      response.logs.push(`Duplicate folder path string: ${duplicateFolderPathString}, folder to copy access to path string: ${createdFolderPathString}`);
+      copyAccessRec(duplicateFolder.getId(), createdFolderId, duplicateFolderPathString, createdFolderPathString, data.keepAccessFolders);
+    }
+    catch (err) {
+      response.logs.push("Error: access copy not completed.");
+      response.logs.push(err.message);
+      return JSON.stringify(response);
+    }
   }
   else {
-    return "Folder already exists!";
+    response.logs.push("Error: folder is not created.")
+    return JSON.stringify(response);
   }
+  Logger.log("All work done.");
+  response.success = true;
+  response.logs.push("All work done.");
+  // Logger.log(JSON.parse(data));
+
+  return JSON.stringify(response);
 }
 function test(){
   try{
