@@ -234,6 +234,13 @@
     }
     
     function submitRequest() {
+      const submissionContainer = $("#submissionContainer");
+      submissionContainer.remove();
+      const postSubmissionContainer = $("#postSubmissionContainer");
+      postSubmissionContainer.append(
+        "<p>Submitted.</p>"
+      )
+
       const data = {
         "duplicateFolder": {
           "id": duplicateFolderId,
@@ -244,7 +251,6 @@
       }
       google.script.run.handleSubmission(JSON.stringify(data));
     }
-
     $(document).ready(function() {
       listFolders();
       $("#promptMessage").text("Select a folder to be duplicated.");
