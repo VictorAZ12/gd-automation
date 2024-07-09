@@ -190,7 +190,6 @@
     
     function confirmFileFolderSelect() {
       // confirm the folders to keep files, prepare for adding access folders
-      alert('confirmed file folders');
       console.log(keepFileFolders);
       $("#promptMessage").text("Select subfolders to maintain access.");
       $('#confirmSelectBtn').off('click');
@@ -234,6 +233,13 @@
     }
     
     function submitRequest() {
+      const submissionContainer = $("#submissionContainer");
+      submissionContainer.remove();
+      const postSubmissionContainer = $("#postSubmissionContainer");
+      postSubmissionContainer.append(
+        "<h2>Submitted</h2>"
+      )
+
       const data = {
         "duplicateFolder": {
           "id": duplicateFolderId,
@@ -242,8 +248,29 @@
         "keepFileFolders": keepFileFolders,
         "keepAccessFolders": keepAccessFolders,
       }
-      google.script.run.handleSubmission(JSON.stringify(data));
+      postSubmissionContainer.append('<div id="postSubmissionSpinner" class="container"><div class="spinner-border" role="status"><span class="sr-only"></span></div><div class="alert alert-warning" role="alert">Processing, please wait.</div></div>');
+      google.script.run.withSuccessHandler(handleResponse).handleSubmission(JSON.stringify(data));
     }
+
+    function handleResponse(response) {
+      const postSubmissionContainer = $("#postSubmissionContainer");
+      let postSubmissionSpinner = $("#postSubmissionSpinner");
+      postSubmissionSpinner.remove();
+      response = JSON.parse(response);
+      if (response.success) {
+        postSubmissionContainer.append('<div class="alert alert-success" role="alert">Successful!</div>');
+        
+      } else {
+        postSubmissionContainer.append('<div class="alert alert-danger" role="alert">Request unsuccessful!</div>');
+      }
+      postSubmissionContainer.append('<h2>Logs</h2>')
+      const logsList = $('<ul class="list-group"></ul>');
+      response.logs.forEach(log => {
+        logsList.append($('<li class="list-group-item"></li>').text(log));
+      });
+      postSubmissionContainer.append(logsList);
+    }
+
 
     $(document).ready(function() {
       listFolders();
