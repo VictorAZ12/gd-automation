@@ -90,26 +90,71 @@ function copyFolderRec(fromId, toId, newFolderName, keepFileFolders){
   // this function creates a folder using newFolderName under the folder with toId
   // the newly created folder will be used to store copied subfolders and files
   // folders present in keepFileFolders will have their files copied, too
-  
-  let fromFolder = DriveApp.getFolderById(fromId);
-  let toFolder = DriveApp.getFolderById(toId);
-
-  // check if a copy already exists
-  let toFolderSubfolders = toFolder.getFolders();
-  while(toFolderSubfolders.hasNext()){
-    let subfolder = toFolderSubfolders.next();
-    if (subfolder.getName() === newFolderName){
-      Logger.log("Folder %s already exists in the target folder, cannot copy folder.", subfolder.getName());
-      return;
-    }
+  let copyFolderResult = {
+    id: null,
+    hasError: false,
+    logs: [],
+  }
+  let fromFolder;
+  let toFolder;
+  try {
+    fromFolder = DriveApp.getFolderById(fromId);
+    toFolder = DriveApp.getFolderById(toId);
+  }
+  catch (err){
+    copyFolderResult.logs.push("Error: Folder to be duplicated or its parent folder is lost.");
+    copyFolderResult.hasError = true;
+    return copyFolderResult;
   }
 
+  // check if a copy already exists
+  try {
+    let toFolderSubfolders = toFolder.getFolders();
+    while(toFolderSubfolders.hasNext()){
+      let subfolder = toFolderSubfolders.next();
+      if (subfolder.getName() === newFolderName){
+        Logger.log("Folder %s already exists in the target folder, cannot copy folder.", subfolder.getName());
+        throw new Error(`Folder ${subfolder.getName()} already exists in the target folder, cannot copy folder.`);
+      }
+    }
+  }
+  catch (err){
+    copyFolderResult.logs.push(err.message);
+    copyFolderResult.hasError = true;
+    return copyFolderResult;
+  }
+  
+
   // create a folder and perform recursive copying
-  let createdFolder = toFolder.createFolder(newFolderName);
-  Logger.log("Folder %s (id: %s) has been created, subfolders and files to be copied into this folder.", createdFolder.getName(), createdFolder.getId());
-  copy(fromFolder, createdFolder, false, keepFileFolders);
+  let createdFolder;
+  try {
+     createdFolder = toFolder.createFolder(newFolderName);
+     Logger.log("Folder %s (id: %s) has been created, subfolders and files to be copied into this folder.", createdFolder.getName(), createdFolder.getId());
+     copyFolderResult.logs.push(`Folder ${createdFolder.getName()} created.`);
+  }
+  catch(err) {
+    Logger.log("Error: Cannot create folder %s.", newFolderName);
+    copyFolderResult.logs.push(`Error: Cannot create folder ${newFolderName}`);
+    copyFolderResult.hasError = true;
+    return copyFolderResult;
+  }
+  
+  
+  try {
+    copy(fromFolder, createdFolder, false, keepFileFolders);
+    copyFolderResult.hasError = false;
+  }
+  catch(err) {
+    Logger.log("Error: something went wrong when copying the folders and files.");
+    copyFolderResult.logs.push("Error: something went wrong when copying the folders and files");
+    copyFolderResult.hasError = true;
+    return copyFolderResult;
+  }
+  
   Logger.log("Folder copied as %s (id: %s).", getFolderPathString(createdFolder.getId()), createdFolder.getId());
-  return createdFolder.getId();
+  copyFolderResult.logs.push(`Folder copied as ${getFolderPathString(createdFolder.getId())}.`);
+  copyFolderResult.id = createdFolder.getId();
+  return copyFolderResult;
 
 }
 
@@ -147,33 +192,55 @@ function copy(fromFolder, toFolder, isCopyFile, keepFileFolders) {
 }
 
 function copyAccessRec(fromId, toId, duplicateFolderPathString, createdFolderPathString, keepAccessFolders) {
-  // copy access based on the copyAccessFolders array  
-  let fromFolder = DriveApp.getFolderById(fromId);
-  let toFolder = DriveApp.getFolderById(toId);
+  // copy access based on the copyAccessFolders array
+  let fromFolder;
+  let toFolder;
+  try{
+    fromFolder = DriveApp.getFolderById(fromId);
+    toFolder = DriveApp.getFolderById(toId);
+  }
+  catch(err) {
+    Logger.log("Could not retrieve a folder using %s or %s when copying access.", formId, toId);
+    throw new Error("Could not find the folder to copy access.");
+  }
+  
 
   // copy folder access
-  let fromSubfolders = fromFolder.getFolders();
-  while (fromSubfolders.hasNext()) {
-    let folder = fromSubfolders.next();
-    // copy access if in keepAccessFolders and has the same relative path
-    let folderRelPathString = getFolderPathString(folder.getId()).replace(duplicateFolderPathString, '');
-    let toSubfolders = toFolder.getFolders();
-    while (toSubfolders.hasNext()){
-      let toSubfolder = toSubfolders.next();
-      let toFolderRelPathString = getFolderPathString(toSubfolder.getId()).replace(createdFolderPathString, '');
-      if (folderRelPathString === toFolderRelPathString) {
-        for (let i=0; i<keepAccessFolders.length; i++){
-          if (folder.getId() === keepAccessFolders[i].id) {
-            copyAccess(folder.getId(), toSubfolder.getId());
-            break;
+  try {
+    let fromSubfolders = fromFolder.getFolders();
+    while (fromSubfolders.hasNext()) {
+      let folder = fromSubfolders.next();
+      // copy access if in keepAccessFolders and has the same relative path
+      let folderRelPathString = getFolderPathString(folder.getId()).replace(duplicateFolderPathString, '');
+      let toSubfolders = toFolder.getFolders();
+      while (toSubfolders.hasNext()){
+        let toSubfolder = toSubfolders.next();
+        let toFolderRelPathString = getFolderPathString(toSubfolder.getId()).replace(createdFolderPathString, '');
+        if (folderRelPathString === toFolderRelPathString) {
+          for (let i=0; i<keepAccessFolders.length; i++){
+            if (folder.getId() === keepAccessFolders[i].id) {
+              try{
+                copyAccess(folder.getId(), toSubfolder.getId());
+              }
+              catch (err) {
+                Logger.log(`Something went wrong when copying access from ${folder.getName()} to ${toSubfolder.getName()}`);
+                throw new Error(`Something went wrong when copying access from ${folder.getName()} to ${toSubfolder.getName()}`);
+              }
+              finally{
+                break;
+              }
+            }
           }
+          copyAccessRec(folder.getId(), toSubfolder.getId(), duplicateFolderPathString, createdFolderPathString, keepAccessFolders);
+          break;
         }
-        copyAccessRec(folder.getId(), toSubfolder.getId(), duplicateFolderPathString, createdFolderPathString, keepAccessFolders);
-        break;
       }
     }
   }
-
+  catch(err){
+    Logger.log("Something went wrong when copying subfolders' access from folder %s to %s", fromFolder.getName(), toFolder.getName());
+    throw new Error(`Something went wrong when copying subfolders' access from folder ${fromFolder.getName()} to ${toFolder.getName()}`);
+  }
 }
 
 function copyAccess(fromId, toId) {
@@ -217,26 +284,88 @@ function handleSubmission(data){
   // }
   data = JSON.parse(data);
   // 1. duplicate folder structure: duplicate the "duplicateFolder", in the same level of this folder and name it "copy of <duplicateFolder's name>"
-  let duplicateFolder = DriveApp.getFolderById(data.duplicateFolder.id);
-  let targetFolder = duplicateFolder.getParents().next();
+  let response = {
+    "success": false,
+    "createdFolderId": null,
+    "createdFolderPath": null,
+    "logs" : []
+  };
+  // fetch the folder to be duplicated
+  let duplicateFolder;
+  let targetFolder;
+  
+  try {
+     duplicateFolder = DriveApp.getFolderById(data.duplicateFolder.id);
+     
+  }
+  catch (err) {
+    response.logs.push("Something went wrong.");
+    response.logs.push("Error: The folder to be duplicated does not exist or has been moved or deleted.");
+    return JSON.stringify(response);
+  }
+  // choose the target folder
+  try {
+    targetFolder = duplicateFolder.getParents().next();
+  }
+  catch (err) {
+    response.logs.push("Something went wrong.");
+    response.logs.push("Error: The folder to be duplicated has no parent folder. Cannot duplicate the root folder Drive App!");
+    return JSON.stringify(response);
+  }
+
+  // copy folders and files
+  let createdFolderId;
+  
   let dulicateFolderSplit = data.duplicateFolder.path.split("/");
   let newFolderName = "[copy]" + dulicateFolderSplit[dulicateFolderSplit.length-1];
-  // copy folders and files
-  let createdFolderId = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName, data.keepFileFolders);
-  // 3. copy access to the new folders based on keepAccessFolders
-  if (createdFolderId){
-    let duplicateFolderPathString = getFolderPathString(duplicateFolder.getId());
-    let createdFolderPathString = getFolderPathString(createdFolderId);
-    Logger.log("Duplicate folder path string: %s, folder to copy access to path string: %s", duplicateFolderPathString, createdFolderPathString);
-    copyAccessRec(duplicateFolder.getId(), createdFolderId, duplicateFolderPathString, createdFolderPathString, data.keepAccessFolders);
-    Logger.log("All work done.");
-    // Logger.log(JSON.parse(data));
-    return createdFolderId;
+  let copyFolderResult = copyFolderRec(duplicateFolder.getId(), targetFolder.getId(), newFolderName, data.keepFileFolders);
+  
+  if (copyFolderResult.hasError){
+    response.logs.push("Something went wrong.");
+    response.logs.push("Error: Folder duplication not completed.");
+    response.logs.push("Runtime:");
+    response.logs = response.logs.concat(copyFolderResult.logs);
+    return JSON.stringify(response);
   }
-  else {
-    return "Folder already exists!";
+  else{
+    createdFolderId = copyFolderResult.id;
+    response.logs = response.logs.concat(copyFolderResult.logs);
   }
   
+  // 3. copy access to the new folders based on keepAccessFolders
+  if (createdFolderId){
+    try {
+      let duplicateFolderPathString = getFolderPathString(duplicateFolder.getId());
+      let createdFolderPathString = getFolderPathString(createdFolderId);
+      Logger.log("Duplicate folder path string: %s, folder to copy access to path string: %s", duplicateFolderPathString, createdFolderPathString);
+      response.logs.push(`Duplicate folder path string: ${duplicateFolderPathString}, folder to copy access to path string: ${createdFolderPathString}`);
+      copyAccessRec(duplicateFolder.getId(), createdFolderId, duplicateFolderPathString, createdFolderPathString, data.keepAccessFolders);
+      response.logs.push("Access copy completed (if any), see Apps Script console for details.");
+    }
+    catch (err) {
+      response.logs.push("Error: access copy not completed.");
+      response.logs.push(err.message);
+      return JSON.stringify(response);
+    }
+  }
+  else {
+    response.logs.push("Error: folder is not created.")
+    return JSON.stringify(response);
+  }
+  Logger.log("All work done.");
+  response.success = true;
+  response.logs.push("All work done.");
+  // Logger.log(JSON.parse(data));
+
+  return JSON.stringify(response);
+}
+function test(){
+  try{
+    throw Error("Error something");
+  }
+  catch(err){
+    Logger.log(err.name + " : " + err.message);
+  }
   
 }
 
