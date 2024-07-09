@@ -288,6 +288,7 @@ function handleSubmission(data){
     "success": false,
     "createdFolderId": null,
     "createdFolderPath": null,
+    "createdFolderUrl": null,
     "logs" : []
   };
   // fetch the folder to be duplicated
@@ -356,16 +357,13 @@ function handleSubmission(data){
   response.success = true;
   response.logs.push("All work done.");
   // Logger.log(JSON.parse(data));
+  response.createdFolderUrl = DriveApp.getFolderById(createdFolderId).getUrl();
 
   return JSON.stringify(response);
 }
 function test(){
-  try{
-    throw Error("Error something");
-  }
-  catch(err){
-    Logger.log(err.name + " : " + err.message);
-  }
+  const folder = DriveApp.getFolderById("1KDw_2XUzR72Wdad2RJJXkS3SajzDc-bW");
+  Logger.log(folder.getUrl());
   
 }
 

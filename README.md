@@ -54,3 +54,5 @@ The user can view response from the apps script service. Also, the developer sho
 - User should be able to see human-friendly messages.
 - Programming running logs should be friendly for developers
 - Program file structures should follow the [best practice](https://developers.google.com/apps-script/guides/html/best-practices).
+### Stage 4
+The user can navigate to the created folder if processed successfully.

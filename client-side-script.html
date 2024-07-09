@@ -259,6 +259,7 @@
       response = JSON.parse(response);
       if (response.success) {
         postSubmissionContainer.append('<div class="alert alert-success" role="alert">Successful!</div>');
+        postSubmissionContainer.append(`<a class="btn btn-primary" href=${response.createdFolderUrl} role="button" target="_blank">Open created folder</a>`);
         
       } else {
         postSubmissionContainer.append('<div class="alert alert-danger" role="alert">Request unsuccessful!</div>');
