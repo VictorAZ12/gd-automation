@@ -190,7 +190,6 @@
     
     function confirmFileFolderSelect() {
       // confirm the folders to keep files, prepare for adding access folders
-      alert('confirmed file folders');
       console.log(keepFileFolders);
       $("#promptMessage").text("Select subfolders to maintain access.");
       $('#confirmSelectBtn').off('click');
@@ -238,7 +237,7 @@
       submissionContainer.remove();
       const postSubmissionContainer = $("#postSubmissionContainer");
       postSubmissionContainer.append(
-        "<p>Submitted.</p>"
+        "<h2>Submitted</h2>"
       )
 
       const data = {
@@ -249,21 +248,25 @@
         "keepFileFolders": keepFileFolders,
         "keepAccessFolders": keepAccessFolders,
       }
+      postSubmissionContainer.append('<div id="postSubmissionSpinner" class="container"><div class="spinner-border" role="status"><span class="sr-only"></span></div><div class="alert alert-warning" role="alert">Processing, please wait.</div></div>');
       google.script.run.withSuccessHandler(handleResponse).handleSubmission(JSON.stringify(data));
     }
 
     function handleResponse(response) {
       const postSubmissionContainer = $("#postSubmissionContainer");
+      let postSubmissionSpinner = $("#postSubmissionSpinner");
+      postSubmissionSpinner.remove();
       response = JSON.parse(response);
       if (response.success) {
-        postSubmissionContainer.append("<p>Submission successful!</p>");
+        postSubmissionContainer.append('<div class="alert alert-success" role="alert">Successful!</div>');
         
       } else {
-        postSubmissionContainer.append("<p>Submission failed. See logs below:</p>");
+        postSubmissionContainer.append('<div class="alert alert-danger" role="alert">Request unsuccessful!</div>');
       }
-      const logsList = $("<ul></ul>");
+      postSubmissionContainer.append('<h2>Logs</h2>')
+      const logsList = $('<ul class="list-group"></ul>');
       response.logs.forEach(log => {
-        logsList.append($("<li></li>").text(log));
+        logsList.append($('<li class="list-group-item"></li>').text(log));
       });
       postSubmissionContainer.append(logsList);
     }
